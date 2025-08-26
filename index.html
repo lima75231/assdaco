@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CUSTOS DE CAMPANHA</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --azul:#0a4d8c;--azul-esc:#083c6d;--bg:#f4f6f8;--borda:#e5e7eb;--ok:#0ea5e9;--verde:#16a34a;--vermelho:#dc2626;--cinza:#6b7280;
+    }
+    *{box-sizing:border-box}
+    body{font-family: 'Inter', sans-serif;margin:0;background:var(--bg);color:#111827}
+    header{background:var(--azul);color:#fff;text-align:center;padding:18px 16px;position:relative;box-shadow:0 2px 6px rgba(0,0,0,.12)}
+    header h1{margin:0;font-size:22px;letter-spacing:.08em}
+    header #usuarioAtual{position:absolute;right:130px;top:18px;font-weight:600}
+    header button{position:absolute;right:16px;top:12px;background:#ef4444;border:none;color:#fff;padding:8px 12px;border-radius:8px;cursor:pointer}
+    header button:hover{background:#dc2626}
+
+    main{max-width:1200px;margin:28px auto;padding:16px}
+    .card{background:#fff;border:1px solid var(--borda);border-radius:14px;box-shadow:0 4px 14px rgba(0,0,0,.06);padding:18px}
+
+    /* Login */
+    #loginContainer{max-width:380px;margin:80px auto;background:#fff;border:1px solid var(--borda);border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,.08);padding:22px}
+    #loginContainer h2{margin:0 0 16px;color:var(--azul)}
+    #loginContainer label{display:block;font-size:14px;margin:10px 0 6px}
+    #loginContainer input{width:100%;padding:10px;border:1px solid var(--borda);border-radius:10px}
+    #loginContainer button{width:100%;margin-top:14px;background:var(--azul);border:none;color:#fff;padding:10px;border-radius:10px;cursor:pointer}
+    #loginContainer .erro{color:#b91c1c;font-size:12px;margin-top:8px}
+
+    /* Form */
+    form#form{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+    form#form .full{grid-column:1/-1}
+    form#form label{font-size:12px;color:#374151}
+    form#form input, form#form select{width:100%;padding:9px;border:1px solid var(--borda);border-radius:10px}
+    form#form button{background:var(--azul);border:none;color:#fff;padding:10px;border-radius:10px;cursor:pointer}
+    form#form button:hover{background:var(--azul-esc)}
+
+    /* Filtros */
+    .filtros{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+    .filtros .field{display:flex;flex-direction:column}
+    .filtros label{font-size:12px;color:#374151}
+    .filtros select,.filtros input{padding:9px;border:1px solid var(--borda);border-radius:10px;min-width:160px}
+    .filtros .actions{margin-left:auto;display:flex;gap:8px;align-items:flex-end}
+    .btn{background:var(--azul);border:none;color:#fff;padding:10px 12px;border-radius:10px;cursor:pointer}
+    .btn:hover{background:var(--azul-esc)}
+    .btn-sec{background:#fff;border:1px solid var(--borda);color:#111827}
+    .btn-sec:hover{background:#f3f4f6}
+
+    /* Tabela */
+    .table-wrap{overflow:auto;border:1px solid var(--borda);border-radius:12px}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    thead th{position:sticky;top:0;background:#f3f4f6;border-bottom:1px solid var(--borda);padding:8px;text-align:left;white-space:nowrap}
+    tbody td{border-top:1px solid var(--borda);padding:8px;vertical-align:middle}
+    tbody tr.baixado{background:#f0f9ff}
+    .acoes button{background:#fff;border:1px solid var(--borda);padding:6px 10px;border-radius:8px;cursor:pointer;margin-right:6px}
+    .acoes button:hover{background:#f9fafb}
+    .valor{font-variant-numeric: tabular-nums}
+    .red{color:var(--vermelho)} .green{color:var(--verde)} .blue{color:var(--azul)}
+
+    /* Totais */
+    .totais{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:14px}
+    .totais .box{background:#fff;border:1px solid var(--borda);border-radius:12px;padding:12px}
+    .totais .tit{font-size:12px;color:#6b7280}
+    .totais .val{font-size:18px;font-weight:700;margin-top:4px}
+
+    @media (max-width:920px){form#form{grid-template-columns:repeat(2,1fr)} header #usuarioAtual{display:none}}
+  </style>
+</head>
+<body>
+  <!-- Login -->
+  <div id="loginContainer" style="display:none;">
+    <h2>Entrar no sistema</h2>
+    <label for="loginUser">Usuário</label>
+    <input id="loginUser" type="text" placeholder="admin, joao, maria" />
+    <label for="loginPass">Senha</label>
+    <input id="loginPass" type="password" placeholder="••••" />
+    <button id="btnLogin">Entrar</button>
+    <div id="loginErro" class="erro"></div>
+  </div>
+
+  <!-- App -->
+  <div id="app" style="display:none;">
+    <header>
+      <h1>CUSTOS DE CAMPANHA</h1>
+      <span id="usuarioAtual"></span>
+      <button onclick="logout()">Sair</button>
+    </header>
+
+    <main>
+      <div class="card" style="margin-bottom:16px;">
+        <form id="form">
+          <div>
+            <label>Usuário (preenchido automaticamente)</label>
+            <input id="usuario" type="text" disabled />
+          </div>
+          <div>
+            <label>Centro de Custo</label>
+            <input id="centro" type="text" placeholder="Ex.: Exames, Consultas" required />
+          </div>
+          <div>
+            <label>Categoria</label>
+            <input id="categoria" type="text" placeholder="Ex.: Laboratório" required />
+          </div>
+          <div>
+            <label>Valor (R$)</label>
+            <input id="valor" type="number" step="0.01" min="0" required />
+          </div>
+          <div>
+            <label>Data de Vencimento</label>
+            <input id="vencimento" type="date" required />
+          </div>
+          <div>
+            <label>Status</label>
+            <select id="status">
+              <option value="aberto">Aberto</option>
+              <option value="baixado">Baixado</option>
+            </select>
+          </div>
+          <div class="full">
+            <label>Descrição (opcional)</label>
+            <input id="descricao" type="text" placeholder="Ex.: Exame X, NF 123" />
+          </div>
+          <div class="full" style="display:flex;gap:8px;justify-content:flex-end;">
+            <button type="submit">Adicionar Lançamento</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Filtros e Exportação -->
+      <div class="card filtros">
+        <div class="field">
+          <label>Mês</label>
+          <select id="fMes"></select>
+        </div>
+        <div class="field">
+          <label>Ano</label>
+          <select id="fAno"></select>
+        </div>
+        <div class="field">
+          <label>Usuário</label>
+          <select id="fUsuario"></select>
+        </div>
+        <div class="field">
+          <label>Status</label>
+          <select id="fStatus">
+            <option value="">Todos</option>
+            <option value="aberto">Aberto</option>
+            <option value="baixado">Baixado</option>
+          </select>
+        </div>
+        <div class="actions">
+          <button id="btnLimpar" class="btn-sec">Limpar filtros</button>
+          <button id="btnExport" class="btn">Exportar CSV</button>
+        </div>
+      </div>
+
+      <div class="table-wrap card">
+        <table>
+          <thead>
+            <tr>
+              <th>Usuário</th>
+              <th>Centro</th>
+              <th>Categoria</th>
+              <th>Descrição</th>
+              <th>Valor</th>
+              <th>Valor Vencido</th>
+              <th>Valor a Vencer</th>
+              <th>Valor Baixado Bruto</th>
+              <th>Vencimento</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+
+      <div class="totais">
+        <div class="box"><div class="tit">Total Geral</div><div id="tTotal" class="val valor"></div></div>
+        <div class="box"><div class="tit">Total Vencido</div><div id="tVencido" class="val valor red"></div></div>
+        <div class="box"><div class="tit">Total a Vencer</div><div id="tAVencer" class="val valor green"></div></div>
+        <div class="box"><div class="tit">Total Baixado Bruto</div><div id="tBaixado" class="val valor blue"></div></div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // ======= Login simples (local) =======
+    const USUARIOS = { admin:'1234', joao:'joao123', maria:'maria123' };
+    const KEY_DATA = 'custosCampanhaLancamentos_v1';
+    const KEY_USER = 'custosCampanhaUsuario';
+
+    const loginBox = document.getElementById('loginContainer');
+    const app = document.getElementById('app');
+    const btnLogin = document.getElementById('btnLogin');
+
+    function checarSessao(){
+      const u = localStorage.getItem(KEY_USER);
+      if(u){ iniciarApp(u); } else { loginBox.style.display='block'; }
+    }
+
+    btnLogin?.addEventListener('click', ()=>{
+      const u = document.getElementById('loginUser').value.trim();
+      const p = document.getElementById('loginPass').value.trim();
+      const msg = document.getElementById('loginErro');
+      if(USUARIOS[u] && USUARIOS[u]===p){
+        localStorage.setItem(KEY_USER, u);
+        iniciarApp(u);
+      }else{
+        msg.textContent='Usuário ou senha inválidos.';
+      }
+    });
+
+    function iniciarApp(usuario){
+      loginBox.style.display='none';
+      app.style.display='block';
+      document.getElementById('usuarioAtual').textContent = `Usuário: ${usuario}`;
+      document.getElementById('usuario').value = usuario;
+      carregar();
+      popularFiltros();
+      render();
+    }
+
+    function logout(){
+      localStorage.removeItem(KEY_USER);
+      location.reload();
+    }
+    window.logout = logout;
+
+    // ======= Dados & Util =======
+    const tbody = document.getElementById('tbody');
+    const form = document.getElementById('form');
+    let dados = [];
+
+    function moeda(n){ return (n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
+
+    function lerStorage(){
+      try{ return JSON.parse(localStorage.getItem(KEY_DATA)||'[]'); }catch{ return []; }
+    }
+    function gravarStorage(){ localStorage.setItem(KEY_DATA, JSON.stringify(dados)); }
+
+    function hojeSemHora(){ const d = new Date(); d.setHours(0,0,0,0); return d; }
+    function dataISO(d){ return new Date(d).toISOString().slice(0,10); }
+
+    // Classificação
+    function classificar(valor, vencimento, status){
+      const hoje = hojeSemHora();
+      const dv = new Date(vencimento); dv.setHours(0,0,0,0);
+      let vencido=0, aVencer=0, baixado=0;
+      if(status==='baixado') baixado = valor; else if(dv < hoje) vencido = valor; else aVencer = valor;
+      return {vencido, aVencer, baixado};
+    }
+
+    // ======= CRUD =======
+    function carregar(){ dados = lerStorage(); }
+
+    form.addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const usuario = document.getElementById('usuario').value;
+      const centro = document.getElementById('centro').value.trim();
+      const categoria = document.getElementById('categoria').value.trim();
+      const valor = parseFloat(document.getElementById('valor').value)||0;
+      const vencimento = document.getElementById('vencimento').value;
+      const status = document.getElementById('status').value;
+      const descricao = document.getElementById('descricao').value.trim();
+      const novo = { id: crypto.randomUUID(), usuario, centro, categoria, valor, vencimento, status, descricao, criadoEm: Date.now() };
+      dados.push(novo);
+      gravarStorage();
+      form.reset();
+      document.getElementById('usuario').value = usuario; // mantém usuário visível
+      popularFiltros();
+      render();
+    });
+
+    function excluir(id){
+      if(!confirm('Excluir este lançamento?')) return;
+      dados = dados.filter(x=>x.id!==id);
+      gravarStorage();
+      popularFiltros();
+      render();
+    }
+    window.excluir = excluir;
+
+    function darBaixa(id){
+      const i = dados.findIndex(x=>x.id===id);
+      if(i<0) return;
+      if(!confirm('Dar baixa neste lançamento?')) return;
+      dados[i].status = 'baixado';
+      gravarStorage();
+      render();
+    }
+    window.darBaixa = darBaixa;
+
+    // ======= Filtros =======
+    const fMes = document.getElementById('fMes');
+    const fAno = document.getElementById('fAno');
+    const fUsuario = document.getElementById('fUsuario');
+    const fStatus = document.getElementById('fStatus');
+    const btnExport = document.getElementById('btnExport');
+    const btnLimpar = document.getElementById('btnLimpar');
+
+    function popularFiltros(){
+      // Meses
+      const meses = ['Todos','01 - Jan','02 - Fev','03 - Mar','04 - Abr','05 - Mai','06 - Jun','07 - Jul','08 - Ago','09 - Set','10 - Out','11 - Nov','12 - Dez'];
+      if(!fMes.dataset.ready){
+        fMes.innerHTML = meses.map((m,i)=>`<option value="${i}">${m}</option>`).join('');
+        fMes.dataset.ready = '1';
+      }
+      // Anos (dinâmico com base nos dados, fallback ano atual ±2)
+      const anosSet = new Set(dados.map(d=> new Date(d.vencimento).getFullYear()).filter(Boolean));
+      if(anosSet.size===0){ const y=new Date().getFullYear(); [y-2,y-1,y,y+1,y+2].forEach(a=>anosSet.add(a)); }
+      const anos = ['Todos', ...Array.from(anosSet).sort((a,b)=>a-b)];
+      fAno.innerHTML = anos.map((a,i)=> i===0?`<option value="">${a}</option>`:`<option value="${a}">${a}</option>`).join('');
+
+      // Usuários
+      const users = ['Todos', ...Array.from(new Set(dados.map(d=>d.usuario))).sort()];
+      fUsuario.innerHTML = users.map((u,i)=> i===0?`<option value="">${u}</option>`:`<option value="${u}">${u}</option>`).join('');
+    }
+
+    [fMes,fAno,fUsuario,fStatus].forEach(el=> el.addEventListener('change', render));
+    btnLimpar.addEventListener('click', (e)=>{ e.preventDefault(); fMes.value='0'; fAno.value=''; fUsuario.value=''; fStatus.value=''; render(); });
+
+    function aplicaFiltros(arr){
+      return arr.filter(item=>{
+        const d = new Date(item.vencimento);
+        const mesSel = parseInt(fMes.value||'0',10); // 0 = Todos
+        const anoSel = fAno.value;
+        const userSel = fUsuario.value;
+        const statusSel = fStatus.value;
+
+        const okMes = mesSel===0 || (d.getMonth()+1)===mesSel;
+        const okAno = !anoSel || d.getFullYear()===parseInt(anoSel,10);
+        const okUser = !userSel || item.usuario===userSel;
+        const okStatus = !statusSel || item.status===statusSel;
+        return okMes && okAno && okUser && okStatus;
+      });
+    }
+
+    // ======= Exportação CSV =======
+    function exportCSV(linhas){
+      const head = ['Usuario','Centro','Categoria','Descricao','Valor','ValorVencido','ValorAVencer','ValorBaixadoBruto','Vencimento','Status'];
+      const rows = linhas.map(it=>{
+        const c = classificar(it.valor, it.vencimento, it.status);
+        return [
+          it.usuario,
+          it.centro,
+          it.categoria,
+          (it.descricao||'').replaceAll('\n',' ').replaceAll(';',','),
+          it.valor.toFixed(2),
+          c.vencido.toFixed(2),
+          c.aVencer.toFixed(2),
+          c.baixado.toFixed(2),
+          dataISO(it.vencimento),
+          it.status
+        ].join(';'); // separador ; para compatibilidade PT-BR
+      });
+      const conteudo = [head.join(';'), ...rows].join('\n');
+      const blob = new Blob(["\ufeff"+conteudo], {type:'text/csv;charset=utf-8;'}); // BOM para Excel
+      const a = document.createElement('a');
+      const mesNome = ['todos','jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'][parseInt(fMes.value||'0',10)];
+      const anoNome = fAno.value||'todos';
+      a.href = URL.createObjectURL(blob);
+      a.download = `custos_campanha_${mesNome}_${anoNome}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    btnExport.addEventListener('click', (e)=>{
+      e.preventDefault();
+      const visiveis = aplicaFiltros(dados);
+      exportCSV(visiveis);
+    });
+
+    // ======= Render =======
+    function render(){
+      tbody.innerHTML = '';
+      let totG=0, totVenc=0, totAVenc=0, totBaix=0;
+
+      const visiveis = aplicaFiltros(dados)
+        .slice()
+        .sort((a,b)=> new Date(a.vencimento) - new Date(b.vencimento));
+
+      visiveis.forEach(item=>{
+        const {vencido, aVencer, baixado} = classificar(item.valor, item.vencimento, item.status);
+        totG += item.valor; totVenc += vencido; totAVenc += aVencer; totBaix += baixado;
+
+        const tr = document.createElement('tr');
+        if(item.status==='baixado') tr.classList.add('baixado');
+        tr.innerHTML = `
+          <td>${item.usuario}</td>
+          <td>${item.centro}</td>
+          <td>${item.categoria}</td>
+          <td>${item.descricao||''}</td>
+          <td class="valor">${moeda(item.valor)}</td>
+          <td class="valor red">${moeda(vencido)}</td>
+          <td class="valor green">${moeda(aVencer)}</td>
+          <td class="valor blue">${moeda(baixado)}</td>
+          <td>${dataISO(item.vencimento)}</td>
+          <td style="text-transform:capitalize">${item.status}</td>
+          <td class="acoes">
+            ${item.status!=='baixado' ? `<button onclick="darBaixa('${item.id}')">Baixar</button>`:''}
+            <button onclick="excluir('${item.id}')">Excluir</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById('tTotal').textContent = moeda(totG);
+      document.getElementById('tVencido').textContent = moeda(totVenc);
+      document.getElementById('tAVencer').textContent = moeda(totAVenc);
+      document.getElementById('tBaixado').textContent = moeda(totBaix);
+    }
+
+    // Start
+    checarSessao();
+  </script>
+</body>
+</html>
