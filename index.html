@@ -415,6 +415,19 @@
 
     // Start
     checarSessao();
+
+    // ...
+    function dataISO(d){ 
+     // Se a data for inválida (null, undefined, etc.), retorne uma string vazia.
+     // Isso evita o erro 'Invalid time value'.
+    if (!d) return ''; 
+    const data = new Date(d);
+     // Verifique se a data é válida antes de formatar
+     if (isNaN(data)) return '';
+     return data.toISOString().slice(0,10); 
+     }
+      // ...
+
   </script>
 </body>
 </html>
