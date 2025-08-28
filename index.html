@@ -68,7 +68,6 @@
   </style>
 </head>
 <body>
-  <!-- Login -->
   <div id="loginContainer" style="display:none;">
     <h2>Entrar no sistema</h2>
     <label for="loginUser">Usuário</label>
@@ -79,7 +78,6 @@
     <div id="loginErro" class="erro"></div>
   </div>
 
-  <!-- App -->
   <div id="app" style="display:none;">
     <header>
       <h1>CUSTOS DE CAMPANHA</h1>
@@ -127,7 +125,6 @@
         </form>
       </div>
 
-      <!-- Filtros e Exportação -->
       <div class="card filtros">
         <div class="field">
           <label>Mês</label>
@@ -185,10 +182,42 @@
     </main>
   </div>
 
+  <script type="module">
+    // Importe as bibliotecas do Firebase que você vai usar
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, getDocs, addDoc, doc, updateDoc, deleteDoc, query, orderBy, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+    // Sua configuração do Firebase (Substitua pelos seus dados)
+    const firebaseConfig = {
+      apiKey: "AIzaSyAePOqY8VceDOINZ1OSV7UzJxwjnAZQgX8",
+      authDomain: "custos-campanha.firebaseapp.com",
+      projectId: "custos-campanha",
+      storageBucket: "custos-campanha.firebasestorage.app",
+      messagingSenderId: "883617427426",
+      appId: "1:883617427426:web:e9c7872a1831a41fd213bb",
+    };
+
+    // Inicialize o Firebase
+    const firebaseApp = initializeApp(firebaseConfig);
+    const db = getFirestore(firebaseApp);
+    const lancamentosCol = collection(db, "lancamentos");
+
+    // Deixe as variáveis e funções globais para o seu script principal
+    window.db = db;
+    window.lancamentosCol = lancamentosCol;
+    window.addDoc = addDoc;
+    window.getDocs = getDocs;
+    window.doc = doc;
+    window.deleteDoc = deleteDoc;
+    window.updateDoc = updateDoc;
+    window.query = query;
+    window.orderBy = orderBy;
+    window.where = where;
+  </script>
+
   <script>
     // ======= Login simples (local) =======
     const USUARIOS = { admin:'1234', joao:'joao123', maria:'maria123' };
-    const KEY_DATA = 'custosCampanhaLancamentos_v1';
     const KEY_USER = 'custosCampanhaUsuario';
 
     const loginBox = document.getElementById('loginContainer');
@@ -218,8 +247,6 @@
       document.getElementById('usuarioAtual').textContent = `Usuário: ${usuario}`;
       document.getElementById('usuario').value = usuario;
       carregar();
-      popularFiltros();
-      render();
     }
 
     function logout(){
@@ -235,11 +262,6 @@
 
     function moeda(n){ return (n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
 
-    function lerStorage(){
-      try{ return JSON.parse(localStorage.getItem(KEY_DATA)||'[]'); }catch{ return []; }
-    }
-    function gravarStorage(){ localStorage.setItem(KEY_DATA, JSON.stringify(dados)); }
-
     function hojeSemHora(){ const d = new Date(); d.setHours(0,0,0,0); return d; }
     function dataISO(d){ return new Date(d).toISOString().slice(0,10); }
 
@@ -252,10 +274,18 @@
       return {vencido, aVencer, baixado};
     }
 
-    // ======= CRUD =======
-    function carregar(){ dados = lerStorage(); }
+    // ======= CRUD - Agora com Firestore =======
+    async function carregar(){
+      dados = [];
+      const querySnapshot = await getDocs(lancamentosCol);
+      querySnapshot.forEach((doc) => {
+        dados.push({ id: doc.id, ...doc.data() });
+      });
+      popularFiltros();
+      render();
+    }
 
-    form.addEventListener('submit', (e)=>{
+    form.addEventListener('submit', async (e)=>{
       e.preventDefault();
       const usuario = document.getElementById('usuario').value;
       const centro = document.getElementById('centro').value.trim();
@@ -264,31 +294,30 @@
       const vencimento = document.getElementById('vencimento').value;
       const status = document.getElementById('status').value;
       const descricao = document.getElementById('descricao').value.trim();
-      const novo = { id: crypto.randomUUID(), usuario, centro, categoria, valor, vencimento, status, descricao, criadoEm: Date.now() };
-      dados.push(novo);
-      gravarStorage();
+      const novo = { usuario, centro, categoria, valor, vencimento, status, descricao, criadoEm: new Date().toISOString() };
+      
+      await addDoc(lancamentosCol, novo);
+      
       form.reset();
       document.getElementById('usuario').value = usuario; // mantém usuário visível
-      popularFiltros();
-      render();
+      carregar();
     });
 
-    function excluir(id){
+    async function excluir(id){
       if(!confirm('Excluir este lançamento?')) return;
-      dados = dados.filter(x=>x.id!==id);
-      gravarStorage();
-      popularFiltros();
-      render();
+      const docRef = doc(db, "lancamentos", id);
+      await deleteDoc(docRef);
+      carregar();
     }
     window.excluir = excluir;
 
-    function darBaixa(id){
+    async function darBaixa(id){
       const i = dados.findIndex(x=>x.id===id);
       if(i<0) return;
       if(!confirm('Dar baixa neste lançamento?')) return;
-      dados[i].status = 'baixado';
-      gravarStorage();
-      render();
+      const docRef = doc(db, "lancamentos", id);
+      await updateDoc(docRef, { status: 'baixado' });
+      carregar();
     }
     window.darBaixa = darBaixa;
 
@@ -416,17 +445,16 @@
     // Start
     checarSessao();
 
-    // ...
     function dataISO(d){ 
-     // Se a data for inválida (null, undefined, etc.), retorne uma string vazia.
-     // Isso evita o erro 'Invalid time value'.
-    if (!d) return ''; 
-    const data = new Date(d);
-     // Verifique se a data é válida antes de formatar
-     if (isNaN(data)) return '';
-     return data.toISOString().slice(0,10); 
-     }
-      // ...
+  // Se a data for inválida (null, undefined, etc.), retorne uma string vazia.
+  // Isso evita o erro 'Invalid time value'.
+  if (!d) return ''; 
+  const data = new Date(d);
+  // Verifique se a data é válida antes de formatar
+  if (isNaN(data)) return '';
+  return data.toISOString().slice(0,10); 
+}
+
 
   </script>
 </body>
