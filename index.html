@@ -416,52 +416,5 @@
     // Start
     checarSessao();
   </script>
-
-  <script>
-  const SHEETDB_API = "https://sheetdb.io/api/v1/r5n107uie7l00";
-
-  // Função de envio de lançamento
-  function enviarLancamento(tipo, centro, descricao, valor) {
-    const dados = {
-      data: {
-        tipo: tipo,
-        centro: centro,
-        descricao: descricao,
-        valor: valor,
-        data: new Date().toLocaleDateString()
-      }
-    };
-
-    fetch(SHEETDB_API, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify(dados)
-    })
-    .then(res => res.json())
-    .then(retorno => {
-      console.log("✅ Enviado com sucesso:", retorno);
-      alert("Lançamento enviado para a planilha!");
-    })
-    .catch(err => {
-      console.error("❌ Erro ao enviar:", err);
-      alert("Erro ao enviar para a planilha.");
-    });
-  }
-
-  // Exemplo de uso:
-  document.getElementById("formLancamento").addEventListener("submit", function(e) {
-    e.preventDefault();
-    const tipo = document.getElementById("tipo").value;
-    const centro = document.getElementById("centro").value;
-    const descricao = document.getElementById("descricao").value;
-    const valor = document.getElementById("valor").value;
-
-    enviarLancamento(tipo, centro, descricao, valor);
-  });
-</script>
-
 </body>
 </html>
-
